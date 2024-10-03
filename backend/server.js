@@ -32,8 +32,11 @@ const app = express();
 
 // **Generate Nonce and Configure Helmet**
 app.use((req, res, next) => {
-    res.locals.nonce = crypto.randomBytes(16).toString('base64');  // Generate a unique nonce
-    console.log(`Generated nonce for request: ${res.locals.nonce}`); // Logging the nonce
+    const nonce = crypto.randomBytes(16).toString('base64'); // Generate a nonce
+    res.locals.nonce = nonce; // Pass nonce to views
+
+    // Update Content Security Policy
+    res.setHeader("Content-Security-Policy", `default-src 'self'; script-src 'self' 'nonce-${nonce}' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'nonce-${nonce}' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;`);
     next();
 });
 
@@ -43,24 +46,25 @@ app.use(helmet({
             "default-src": ["'self'"],
             "style-src": [
                 "'self'",
+                "'unsafe-inline'", // Allow inline styles
                 "https://cdn.jsdelivr.net",
                 "https://cdnjs.cloudflare.com",
-                (req, res) => `'nonce-${res.locals.nonce}'` // Apply nonce to inline styles
+                (req, res) => `'nonce-${res.locals.nonce}'`
             ],
             "script-src": [
                 "'self'",
-                (req, res) => `'nonce-${res.locals.nonce}'`, // Apply nonce to inline scripts
+                "'unsafe-inline'", // Allow inline scripts
                 "https://cdn.jsdelivr.net",
-                "https://cdnjs.cloudflare.com"
+                "https://cdnjs.cloudflare.com",
+                (req, res) => `'nonce-${res.locals.nonce}'`
             ],
             "img-src": ["'self'", "data:"],
             "font-src": ["'self'", "https://cdnjs.cloudflare.com"],
             "connect-src": [
                 "'self'",
-                "ws://localhost:5000", // Allow WebSocket connections
-                "http://localhost:5000" // Allow HTTP polling
+                "ws://localhost:5000",
+                "http://localhost:5000"
             ],
-            // Add other directives as needed
         }
     }
 }));
@@ -450,16 +454,18 @@ app.post('/fine-tune', async (req, res) => {
         return res.status(400).json({ message: 'Hugging Face API token is missing. Please set it in Settings.' });
     }
 
+    let newJob;  // Declare newJob here
+
     try {
         // **Create a New Job Record in the Database**
-        const newJob = await Job.create({
+        newJob = await Job.create({
             userId: req.user.id,
             repo_url,
-            model_id, // Ensure the model_id is passed as-is, without appending /fine-tune
+            model_id,
             status: 'pending',
         });
 
-        // **Initiate Fine-Tuning Process (Here you would send the request to Hugging Face)**
+        // **Initiate Fine-Tuning Process**
         const response = await axios.post(`https://api.huggingface.co/models/${model_id}/fine-tune`, {
             headers: {
                 'Authorization': `Bearer ${hf_token}`
@@ -474,7 +480,9 @@ app.post('/fine-tune', async (req, res) => {
 
     } catch (error) {
         console.error('Error during fine-tuning:', error.response?.data || error.message);
-        await newJob.update({ status: 'failed', result: error.response?.data || error.message });
+        if (newJob) {
+            await newJob.update({ status: 'failed', result: error.response?.data || error.message });
+        }
         res.status(500).json({ message: 'Fine-tuning failed.' });
     }
 });

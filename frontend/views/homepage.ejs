@@ -1,0 +1,151 @@
+<!-- frontend/views/homepage.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InfoComm Worldwide</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Animate.css for Animations -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+    <!-- Include Navbar -->
+    <%- include('partials/navbar') %>
+
+    <!-- Hero Section -->
+    <section class="hero d-flex align-items-center justify-content-center">
+        <div class="container">
+            <h1 class="animate__animated animate__fadeInDown">Welcome to InfoComm Worldwide</h1>
+            <p class="animate__animated animate__fadeInUp">
+                The future of automated ML pipelines. Integrate GitHub, Hugging Face, and AI for seamless model fine-tuning.
+            </p>
+            <a href="/auth/github" class="btn btn-primary btn-lg animate__animated animate__zoomIn">
+                <i class="fab fa-github me-2"></i> Get Started
+            </a>
+        </div>
+    </section>
+
+    <!-- Integrations Section -->
+    <section class="integrations section">
+        <div class="container">
+            <h2 class="section-heading">Seamless Integrations</h2>
+            <div class="row">
+                <div class="col-4 col-md-2 text-center">
+                    <img src="/images/github-logo.png" alt="GitHub Logo" title="GitHub Integration" class="integration-logo">
+                    <p>GitHub</p>
+                </div>
+                <div class="col-4 col-md-2 text-center">
+                    <img src="/images/huggingface-logo.png" alt="Hugging Face Logo" title="Hugging Face Integration" class="integration-logo">
+                    <p>Hugging Face</p>
+                </div>
+                <div class="col-4 col-md-2 text-center">
+                    <img src="/images/ai-icon.png" alt="AI Integration" title="AI Integration" class="integration-logo">
+                    <p>AI</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- API Usage Statistics Section -->
+    <section class="api-usage section">
+        <div class="container">
+            <h2 class="section-heading text-center">API Usage Statistics</h2>
+            <div class="row text-center">
+                <div class="col-md-4 mb-4">
+                    <div class="stat-card p-4 bg-white shadow-sm rounded">
+                        <i class="fas fa-project-diagram fa-3x mb-3"></i>
+                        <h4>Repositories Integrated</h4>
+                        <p><%= apiStats.repositories %></p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="stat-card p-4 bg-white shadow-sm rounded">
+                        <i class="fas fa-cogs fa-3x mb-3"></i>
+                        <h4>Models Fine-Tuned</h4>
+                        <p><%= apiStats.modelsFineTuned %></p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="stat-card p-4 bg-white shadow-sm rounded">
+                        <i class="fas fa-users fa-3x mb-3"></i>
+                        <h4>Active Users</h4>
+                        <p><%= apiStats.activeUsers %></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Latest Fine-Tuning Jobs Section -->
+    <section class="latest-jobs section bg-light">
+        <div class="container">
+            <h2 class="section-heading text-center">Latest Fine-Tuning Jobs</h2>
+            <div class="row">
+                <% if (latestJobs && latestJobs.length > 0) { %>
+                    <% latestJobs.forEach(job => { %>
+                        <div class="col-md-4 mb-4">
+                            <div class="card job-card shadow-sm rounded">
+                                <div class="card-body">
+                                    <h5 class="card-title">Job #<%= job.id %></h5>
+                                    <p class="card-text"><strong>Repository:</strong> <a href="<%= job.repo_url %>" target="_blank"><%= job.repo_url %></a></p>
+                                    <p class="card-text"><strong>Model ID:</strong> <%= job.model_id %></p>
+                                    <p class="card-text"><strong>Status:</strong> <span class="badge status-<%= job.status.replace('-', '') %>"><%= job.status.charAt(0).toUpperCase() + job.status.slice(1) %></span></p>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <p class="text-center">No recent fine-tuning jobs to display.</p>
+                <% } %>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="how-it-works section">
+        <div class="container">
+            <h2 class="section-heading text-center">How It Works</h2>
+            <div class="row">
+                <div class="col-md-4 mb-4 text-center">
+                    <i class="fas fa-code fa-3x mb-3"></i>
+                    <h4>Connect Your GitHub</h4>
+                    <p>Authenticate with GitHub to access your repositories directly from our platform.</p>
+                </div>
+                <div class="col-md-4 mb-4 text-center">
+                    <i class="fas fa-brain fa-3x mb-3"></i>
+                    <h4>Select and Fine-Tune Models</h4>
+                    <p>Choose a repository and model to initiate the fine-tuning process using Hugging Face.</p>
+                </div>
+                <div class="col-md-4 mb-4 text-center">
+                    <i class="fas fa-tasks fa-3x mb-3"></i>
+                    <h4>Monitor in Real-Time</h4>
+                    <p>Track the progress of your fine-tuning jobs with real-time updates and notifications.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; <span id="currentYear"></span> InfoComm Worldwide. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Animate.css JS (optional for triggering animations) -->
+    <script>
+        // Update current year in footer
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>

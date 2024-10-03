@@ -1,0 +1,152 @@
+<!-- frontend/views/jobHistory.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job History - InfoComm Worldwide</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Animate.css for Animations -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        /* Custom Styles */
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar-brand img {
+            border-radius: 50%;
+        }
+        .header {
+            padding: 60px 0;
+            text-align: center;
+            background-color: #ffffff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        .header p {
+            font-size: 1.1rem;
+            color: #6c757d;
+        }
+        .job-table th, .job-table td {
+            vertical-align: middle;
+        }
+        .job-status {
+            font-weight: bold;
+        }
+        .status-pending { color: #ffc107; }
+        .status-in-progress { color: #17a2b8; }
+        .status-completed { color: #28a745; }
+        .status-failed { color: #dc3545; }
+    </style>
+</head>
+<body>
+
+    <!-- Include Navbar -->
+    <%- include('partials/navbar') %>
+
+    <!-- Main Content -->
+    <section class="container mt-5 pt-5">
+        <!-- Header -->
+        <div class="header animate__animated animate__fadeInDown">
+            <h1>Job History</h1>
+            <p>View your past and ongoing fine-tuning jobs.</p>
+        </div>
+
+        <!-- Job History Table -->
+        <div class="mb-5">
+            <h3 class="mb-4"><i class="fas fa-history me-2"></i>Your Fine-Tuning Jobs</h3>
+            <table class="table table-striped job-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Job ID</th>
+                        <th scope="col">Repository</th>
+                        <th scope="col">Model ID</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (jobs && jobs.length > 0) { %>
+                        <% jobs.forEach(job => { %>
+                            <tr>
+                                <th scope="row">#<%= job.id %></th>
+                                <td><a href="<%= job.repo_url %>" target="_blank"><%= job.repo_url %></a></td>
+                                <td><%= job.model_id %></td>
+                                <td id="job-<%= job.id %>" class="job-status status-<%= job.status.replace('-', '') %>">
+                                    <%= job.status.charAt(0).toUpperCase() + job.status.slice(1) %>
+                                </td>
+                                <td>
+                                    <% if (job.status === 'completed') { %>
+                                        <a href="<%= job.result.download_url %>" class="btn btn-success btn-sm" target="_blank">
+                                            <i class="fas fa-download me-1"></i> Download
+                                        </a>
+                                    <% } else if (job.status === 'failed') { %>
+                                        <span class="text-danger">Error: <%= job.result %></span>
+                                    <% } else { %>
+                                        N/A
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="5" class="text-center">No fine-tuning jobs found.</td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Include Footer -->
+    <%- include('partials/footer') %>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Socket.io -->
+    <script src="/socket.io/socket.io.js"></script>
+    <!-- Custom JS -->
+    <script>
+        // Update current year in footer (if not already handled)
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+        // Initialize Socket.io
+        const socket = io();
+
+        // Join the user's personal room
+        socket.emit('join-room', '<%= userId %>');
+
+        // Listen for job completion
+        socket.on('fine-tuning-completed', (data) => {
+            const jobElement = document.getElementById(`job-${data.jobId}`);
+            if (jobElement) {
+                jobElement.textContent = 'Completed';
+                jobElement.classList.remove('status-pending', 'status-in-progress', 'status-failed');
+                jobElement.classList.add('status-completed');
+            }
+            alert(`Job ${data.jobId} has been completed successfully.`);
+        });
+
+        // Listen for job failure
+        socket.on('fine-tuning-failed', (data) => {
+            const jobElement = document.getElementById(`job-${data.jobId}`);
+            if (jobElement) {
+                jobElement.textContent = 'Failed';
+                jobElement.classList.remove('status-pending', 'status-in-progress', 'status-completed');
+                jobElement.classList.add('status-failed');
+            }
+            alert(`Job ${data.jobId} has failed. Please try again.`);
+        });
+    </script>
+</body>
+</html>

@@ -69,17 +69,6 @@ app.use(helmet({
     }
 }));
 
-// **Logging Middleware**
-app.use(morgan('combined'));
-
-// **Rate Limiting Middleware**
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
-    message: 'Too many requests from this IP, please try again later.'
-});
-app.use(limiter);
-
 // **EJS Configuration**
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../frontend/views'));
@@ -91,6 +80,17 @@ app.use(express.json());
 // **Serve Static Files from the "public" Directory**
 app.use(express.static(path.join(__dirname, '../frontend/public')));
 
+// **Logging Middleware**
+app.use(morgan('combined'));
+
+// **Rate Limiting Middleware**
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again later.'
+});
+app.use(limiter);
+
 // **Initialize Session Store with Sequelize**
 const sessionStore = new SequelizeStore({
     db: sequelize,
@@ -101,6 +101,7 @@ app.use(session({
     secret: process.env.SESSION_SECRET, // Ensure this is set in your environment variables
     resave: false,
     saveUninitialized: false,
+    store: sessionStore,
     cookie: { secure: false }  // Set secure: true if using HTTPS
 }));
 
@@ -282,17 +283,38 @@ async function fetchLatestJobs(limit = 3) {
  * @desc    Render Homepage
  */
 app.get('/', async (req, res) => {
-    // **Fetch API Usage Statistics**
-    const apiStats = await fetchApiUsageStats();
+    try {
+        // **Fetch API Usage Statistics**
+        const apiStats = await fetchApiUsageStats();
 
-    // **Fetch Latest Jobs**
-    const latestJobs = await fetchLatestJobs(3);
+        // **Fetch Latest Jobs**
+        const latestJobs = await fetchLatestJobs(3);
 
-    res.render('homepage', {
-        page: 'home',
-        apiStats,
-        latestJobs
-    });
+        res.render('homepage', {
+            page: 'home',
+            apiStats,
+            latestJobs
+        });
+    } catch (error) {
+        console.error('Error rendering homepage:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+/**
+ * @route   GET /saas
+ * @desc    Render SaaS Page
+ */
+app.get('/saas', (req, res) => {
+    try {
+        res.render('saas', {
+            page: 'saas'
+            // Add any additional data you want to pass to saas.ejs here
+        });
+    } catch (error) {
+        console.error('Error rendering SaaS page:', error);
+        res.status(500).send('Internal Server Error');
+    }
 });
 
 /**

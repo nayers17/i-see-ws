@@ -30,6 +30,43 @@ const initializeFineTuningQueue = require('./queues/fineTuningQueue');
 // **Initialize Express App**
 const app = express();
 
+// backend/contentGenerator.js
+
+require('dotenv').config();
+const axios = require('axios');
+
+const HF_API_KEY = process.env.HF_API_KEY;
+const API_ENDPOINT = "https://api-inference.huggingface.co/models/your_model_name";
+
+async function generateContent(prompt) {
+    try {
+        const response = await axios.post(API_ENDPOINT, {
+            inputs: prompt,
+        }, {
+            headers: {
+                'Authorization': `Bearer ${HF_API_KEY}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        return response.data.generated_text || response.data[0]?.generated_text || 'No content generated';
+    } catch (error) {
+        console.error('Error generating content:', error.message);
+        return null;
+    }
+}
+
+// Example usage
+const prompt = "Write a detailed blog post about the latest trends in artificial intelligence for 2024.";
+generateContent(prompt).then(content => {
+    if (content) {
+        console.log('Generated Content:', content);
+    } else {
+        console.log('Failed to generate content');
+    }
+});
+
+
 // **Generate Nonce and Configure Helmet**
 app.use((req, res, next) => {
     const nonce = crypto.randomBytes(16).toString('base64'); // Generate a nonce
